@@ -32,7 +32,7 @@
 	},
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo apt-get update && sudo apt-get install -y libreoffice && pip3 install -r requirements.txt"
+	"postCreateCommand": "sudo apt-get update && sudo apt-get install -y libreoffice && pip3 install -r requirements.txt && mkdir -p files/pptx files/pdf"
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
