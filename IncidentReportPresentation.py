@@ -12,16 +12,20 @@ from pptx.text.text import _Paragraph
 
 from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE
 
+from UniqueColorGenerator import UniqueColorGenerator
+
 
 sky_blue = RGBColor(0x00, 0x70, 0xc0)
 bright_red = RGBColor(0xB2, 0x22, 0x22)
 
 
 class IncidentReportPresentation:
-    def __init__(self, pres: Presentation, enterprise_logo_path: string, event_table_headers):
+    def __init__(self, pres: Presentation, enterprise_logo_path: string, event_table_headers, colorize_event_tables = True):
         self.prs = pres
         self.enterprise_logo = enterprise_logo_path
         self.event_table_headers = event_table_headers
+        self.color_generator = UniqueColorGenerator(60)
+        self.colorize_direct_causes = colorize_event_tables
 
     def save(self, file_path:string):
         return self.prs.save(file_path)
@@ -243,8 +247,14 @@ class IncidentReportPresentation:
             
             direct_cause_type_ref = direct_cause['DirectCauseTypeId']['name'] + ' :'
 
+            random_direct_cause_event = None
+
+            if self.colorize_direct_causes:
+                random_color = self.color_generator.generate_unique_color()
+                random_direct_cause_event =  RGBColor(random_color[0], random_color[1], random_color[2])
+
             cell_text = cell.text_frame.add_paragraph()  # Center column titles
-            self.__edit_paragraph(cell_text, text_content=direct_cause_type_ref, font_size=10.5, font_name='Calibri', bold=True)
+            self.__edit_paragraph(cell_text, text_content=direct_cause_type_ref, font_size=10.5, font_name='Calibri', color=random_direct_cause_event, bold=True)
 
             direct_cause_description = direct_cause['description']
             cell_text = cell.text_frame.add_paragraph()  # Center column titles
@@ -259,7 +269,7 @@ class IncidentReportPresentation:
 
                 root_cause_type_ref = "[" + direct_cause['DirectCauseTypeId']['code'] + "] - " + root_cause['FundamentalCauseTypeId']['name'] + " :" 
                 cell_text1 = cell1.text_frame.add_paragraph()  
-                self.__edit_paragraph(cell_text1, text_content=root_cause_type_ref, font_size=10.5, font_name='Calibri', bold=True)
+                self.__edit_paragraph(cell_text1, text_content=root_cause_type_ref, font_size=10.5, font_name='Calibri', color=random_direct_cause_event, bold=True)
 
                 root_cause_description = root_cause['description']
                 cell_text1 = cell1.text_frame.add_paragraph()  
@@ -275,7 +285,7 @@ class IncidentReportPresentation:
 
                     improvement_action_type_ref = "[" + root_cause['FundamentalCauseTypeId']['code'] + "] - " + improvement_action['improvementActionTypeId']['process'] + " :" 
                     cell_text2 = cell2.text_frame.add_paragraph()  
-                    self.__edit_paragraph(cell_text2, text_content=improvement_action_type_ref, font_size=10.5, font_name='Calibri', bold=True)
+                    self.__edit_paragraph(cell_text2, text_content=improvement_action_type_ref, font_size=10.5, font_name='Calibri', color=random_direct_cause_event, bold=True)
 
                     root_cause_description = root_cause['description']
                     cell_text2 = cell2.text_frame.add_paragraph()  
@@ -286,9 +296,9 @@ class IncidentReportPresentation:
                     cell_text2 = cell2.text_frame.add_paragraph()
 
                     cell3 = table.cell(1, 3)
-                    responsabilities_ref = "[" + improvement_action['improvementActionTypeId']['code'] + "] :"
+                    responsibilities_ref = "[" + improvement_action['improvementActionTypeId']['code'] + "] :"
                     cell_text3 = cell3.text_frame.add_paragraph()  
-                    self.__edit_paragraph(cell_text3, text_content=responsabilities_ref, font_size=10.5, font_name='Calibri', bold=True, alignment=PP_ALIGN.CENTER)
+                    self.__edit_paragraph(cell_text3, text_content=responsibilities_ref, font_size=10.5, font_name='Calibri', color=random_direct_cause_event, bold=True, alignment=PP_ALIGN.CENTER)
 
                     cell_text3 = cell3.text_frame.add_paragraph()  
                     self.__edit_paragraph(cell_text3, text_content=improvement_action['responsible'], font_size=10.5, font_name='Calibri', alignment=PP_ALIGN.CENTER)
@@ -301,7 +311,7 @@ class IncidentReportPresentation:
 
                     cell4 = table.cell(1, 4)
                     cell_text4 = cell4.text_frame.add_paragraph()  
-                    self.__edit_paragraph(cell_text4, text_content=responsabilities_ref, font_size=10.5, font_name='Calibri', bold=True, alignment=PP_ALIGN.CENTER)
+                    self.__edit_paragraph(cell_text4, text_content=responsibilities_ref, font_size=10.5, font_name='Calibri', color=random_direct_cause_event, bold=True, alignment=PP_ALIGN.CENTER)
 
                     date_obj = datetime.fromisoformat(improvement_action['deadLine'])
                     incident_report_edition_date = date_obj.strftime('%d/%m/%Y')

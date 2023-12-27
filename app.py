@@ -22,6 +22,20 @@ def convert_file_to_pdf(file_name):
 
     # return '/files/pdf/' + file_name
 
+def check_if_colorable(events_data, direct_causes_security_limit = 35):
+    count = 0
+    for event_data in events_data:
+        if event_data['directCauses']:
+            for direct_cause in event_data['directCauses']:
+                count += 1
+
+    is_ok = count <= direct_causes_security_limit
+
+    # print(f"{count} <= {direct_causes_security_limit} ==> {is_ok}")
+
+    return is_ok
+
+
 app = Flask(__name__)
 @app.route('/api/<string:filetype>', methods=['POST'])
 def create_presentation(filetype):
@@ -71,8 +85,6 @@ def create_presentation(filetype):
 
         data = json.loads(json_data)[0]
         
-        print(data)
-
         incident_title = data['description']
         incident_site = data['site']['name']
         
@@ -83,7 +95,7 @@ def create_presentation(filetype):
 
         events_data = data['events']
 
-        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers)
+        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers, check_if_colorable(events_data))
 
         # Slide 1
         incident_presentation.set_front_page(incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
