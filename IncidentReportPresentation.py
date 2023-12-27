@@ -1,3 +1,4 @@
+from datetime import datetime
 import string
 from pptx import Presentation
 from pptx import Presentation
@@ -17,10 +18,11 @@ bright_red = RGBColor(0xB2, 0x22, 0x22)
 
 
 class IncidentReportPresentation:
-    def __init__(self, pres: Presentation, enterprise_logo_path: string):
+    def __init__(self, pres: Presentation, enterprise_logo_path: string, event_table_headers):
         self.prs = pres
         self.enterprise_logo = enterprise_logo_path
-        
+        self.event_table_headers = event_table_headers
+
     def save(self, file_path:string):
         return self.prs.save(file_path)
 
@@ -93,12 +95,12 @@ class IncidentReportPresentation:
 
         incident_info = incident_site + " LE " + incident_report_edition_date
 
-        self.edit_textbox(title_box, incident_info, 18, 'Calibri', sky_blue, PP_ALIGN.CENTER, True)
+        self.edit_textbox(title_box, incident_info.upper(), 18, 'Calibri', sky_blue, PP_ALIGN.CENTER, True)
 
         # picture_with_caption_layout: placeholders[0] => Title
         title_shape = slide1.shapes.placeholders[0]
         title = title_shape.text_frame.add_paragraph()
-        self.__edit_paragraph(paragraph=title, text_content=incident_title, color=bright_red ,alignment=PP_ALIGN.CENTER)
+        self.__edit_paragraph(paragraph=title, text_content=incident_title.upper(), color=bright_red ,alignment=PP_ALIGN.CENTER, bold=True)
 
         # picture_with_caption_layout: placeholders[2] => Text Placeholder
         text_shape = slide1.shapes.placeholders[placeholder_id]
@@ -113,6 +115,7 @@ class IncidentReportPresentation:
         title_slide2_shape = slide2.shapes.placeholders[0]
         title_slide2_shape.text = summary_title
         title_slide2_shape.text_frame.paragraphs[0].font.color.rgb = RGBColor(0xB2, 0x22, 0x22)
+        title_slide2_shape.text_frame.paragraphs[0].font.bold = True
 
         slide2_shape_content = slide2.shapes.placeholders[1]
         slide2_shape_content_text_frame = slide2_shape_content.text_frame
@@ -127,7 +130,7 @@ class IncidentReportPresentation:
 
         for i, member in enumerate(parts):
             p2 = slide2_shape_content_text_frame.add_paragraph()
-            self.__edit_paragraph(p2, text_content=member, color=RGBColor(0xB2, 0x22, 0x22))
+            self.__edit_paragraph(p2, text_content=member, font_size=24, color=bright_red, bold=True)
             # p2.text = member
             # p2.font.color.rgb = RGBColor(0xB2, 0x22, 0x22)
 
@@ -147,7 +150,7 @@ class IncidentReportPresentation:
         
         txBox = self.add_textbox_to_slide(slide.slide_id, 0.25, 0.5, 9.5, 6.4)
         p = txBox.text_frame.add_paragraph()
-        self.__edit_paragraph(paragraph=p, text_content=slide_content, font_size=16, alignment=PP_ALIGN.JUSTIFY)
+        self.__edit_paragraph(paragraph=p, text_content=slide_content, font_size=13, font_name='Calibri', alignment=PP_ALIGN.JUSTIFY)
 
 
 
@@ -160,7 +163,7 @@ class IncidentReportPresentation:
         tf = txBox2.text_frame
         p = tf.paragraphs[0]
 
-        self.__edit_paragraph(p, slide_title, font_size=36, color=RGBColor(0xB2, 0x22, 0x22), alignment=PP_ALIGN.RIGHT, bold=True)
+        self.__edit_paragraph(p, slide_title, font_size=36, color=RGBColor(0xB2, 0x22, 0x22), bold=True)
 
         # Ajouter du contenu à la diapositive sous forme de deux colonnes
         txBox1 = slide4.shapes.add_textbox(Inches(0), Inches(0.5), Inches(4.5), Inches(6))
@@ -210,26 +213,106 @@ class IncidentReportPresentation:
         self.add_paragraph(text2_box, text="ARBRE DES CAUSES", font_size=44, font_name='Tahoma', color=bright_red)
 
 
-    def add_event_slide(self, event_title, event_table_titles):
+    def add_event_slide(self, event_data):
         # Ajouter une diapositive vide (la septième diapositive)
         slide_layout = self.prs.slide_layouts[6]  # 6 est une diapositive vide
         slide8 = self.prs.slides.add_slide(slide_layout)
 
         # Ajouter un titre à la diapositive
         title_box = self.add_textbox_to_slide(slide8.slide_id, left=0, top=0, width=10, height=1, word_wrap=True)
-        self.edit_textbox(title_box, text="Evènement : " + event_title , font_size=30, font_name='Calibri', color=bright_red, alignment=PP_ALIGN.CENTER)
+        title_box_content = "Evènement : " + event_data['title'] + " (" + event_data['EventType']['code'] + ")"
+        self.edit_textbox(title_box, text=title_box_content, font_size=24, font_name='Calibri', color=bright_red, alignment=PP_ALIGN.CENTER, bold=True)
 
         # Ajouter un tableau en bas de la diapositive
         table = slide8.shapes.add_table(2, 5, Inches(0.25), Inches(1.15), Inches(9.5), Inches(10.75)).table  # Added 0.5 inch margin to the left, right and bottom
 
         # Définir les titres des colonnes
-        for i in range(5):
+        for i in range(len(self.event_table_headers)):
             cell = table.cell(0, i)
             cell.text_frame.auto_size = True
-            cell.text = event_table_titles[i]
-            cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER  # Center column titles
+            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+
+            cell_text = cell.text_frame.paragraphs[0]  # Center column titles
+            self.__edit_paragraph(cell_text, text_content=self.event_table_headers[i], font_size=13, font_name='Calibri', alignment=PP_ALIGN.CENTER, bold=True)
 
         table.rows[0].height = Inches(0.5)  # Définir la hauteur à 1 pouce
+
+
+        for direct_cause in event_data['directCauses']:
+            cell = table.cell(1, 0)
+            
+            direct_cause_type_ref = direct_cause['DirectCauseTypeId']['name'] + ' :'
+
+            cell_text = cell.text_frame.add_paragraph()  # Center column titles
+            self.__edit_paragraph(cell_text, text_content=direct_cause_type_ref, font_size=10.5, font_name='Calibri', bold=True)
+
+            direct_cause_description = direct_cause['description']
+            cell_text = cell.text_frame.add_paragraph()  # Center column titles
+            self.__edit_paragraph(cell_text, text_content=direct_cause_description, font_size=10.5, font_name='Calibri')
+
+            cell_text = cell.text_frame.add_paragraph()
+            cell_text = cell.text_frame.add_paragraph()
+
+
+            for root_cause in direct_cause['fundamentalCauses']:
+                cell1 = table.cell(1, 1)
+
+                root_cause_type_ref = "[" + direct_cause['DirectCauseTypeId']['code'] + "] - " + root_cause['FundamentalCauseTypeId']['name'] + " :" 
+                cell_text1 = cell1.text_frame.add_paragraph()  
+                self.__edit_paragraph(cell_text1, text_content=root_cause_type_ref, font_size=10.5, font_name='Calibri', bold=True)
+
+                root_cause_description = root_cause['description']
+                cell_text1 = cell1.text_frame.add_paragraph()  
+                self.__edit_paragraph(cell_text1, text_content=direct_cause_description, font_size=10.5, font_name='Calibri')
+
+                cell_text1 = cell1.text_frame.add_paragraph()
+                cell_text1 = cell1.text_frame.add_paragraph()
+
+                for improvement_action in root_cause['improvementActions']:
+                    cell2 = table.cell(1, 2)
+                    
+                    root_cause_type_code = improvement_action['improvementActionTypeId']['code'] 
+
+                    improvement_action_type_ref = "[" + root_cause['FundamentalCauseTypeId']['code'] + "] - " + improvement_action['improvementActionTypeId']['process'] + " :" 
+                    cell_text2 = cell2.text_frame.add_paragraph()  
+                    self.__edit_paragraph(cell_text2, text_content=improvement_action_type_ref, font_size=10.5, font_name='Calibri', bold=True)
+
+                    root_cause_description = root_cause['description']
+                    cell_text2 = cell2.text_frame.add_paragraph()  
+                    self.__edit_paragraph(cell_text2, text_content=root_cause_description, font_size=10.5, font_name='Calibri')
+
+                    cell_text2 = cell2.text_frame.add_paragraph()
+                    cell_text2 = cell2.text_frame.add_paragraph()
+                    cell_text2 = cell2.text_frame.add_paragraph()
+
+                    cell3 = table.cell(1, 3)
+                    responsabilities_ref = "[" + improvement_action['improvementActionTypeId']['code'] + "] :"
+                    cell_text3 = cell3.text_frame.add_paragraph()  
+                    self.__edit_paragraph(cell_text3, text_content=responsabilities_ref, font_size=10.5, font_name='Calibri', bold=True, alignment=PP_ALIGN.CENTER)
+
+                    cell_text3 = cell3.text_frame.add_paragraph()  
+                    self.__edit_paragraph(cell_text3, text_content=improvement_action['responsible'], font_size=10.5, font_name='Calibri', alignment=PP_ALIGN.CENTER)
+
+                    cell_text3 = cell3.text_frame.add_paragraph()
+                    cell_text3 = cell3.text_frame.add_paragraph()
+                    cell_text3 = cell3.text_frame.add_paragraph()
+                    cell_text3 = cell3.text_frame.add_paragraph()
+
+
+                    cell4 = table.cell(1, 4)
+                    cell_text4 = cell4.text_frame.add_paragraph()  
+                    self.__edit_paragraph(cell_text4, text_content=responsabilities_ref, font_size=10.5, font_name='Calibri', bold=True, alignment=PP_ALIGN.CENTER)
+
+                    date_obj = datetime.fromisoformat(improvement_action['deadLine'])
+                    incident_report_edition_date = date_obj.strftime('%d/%m/%Y')
+
+                    cell_text4 = cell4.text_frame.add_paragraph()  
+                    self.__edit_paragraph(cell_text4, text_content=incident_report_edition_date, font_size=10.5, font_name='Calibri', alignment=PP_ALIGN.CENTER)
+
+                    cell_text4 = cell4.text_frame.add_paragraph()
+                    cell_text4 = cell4.text_frame.add_paragraph()
+                    cell_text4 = cell4.text_frame.add_paragraph()
+                    cell_text4 = cell4.text_frame.add_paragraph()
 
 
     def set_resume_slide(self, slide_title):
@@ -239,7 +322,7 @@ class IncidentReportPresentation:
         slide9 = self.prs.slides.add_slide(slide_layout)
 
         title_box = self.add_textbox_to_slide(slide9.slide_id, left=0, top=0, width=10, height=1)
-        self.edit_textbox(title_box, text=slide_title, font_size=30, font_name='Calibri', color=bright_red, alignment=PP_ALIGN.CENTER)
+        self.edit_textbox(title_box, text=slide_title, font_size=30, font_name='Calibri', color=bright_red, alignment=PP_ALIGN.CENTER, bold=True)
 
         self.add_textbox_to_slide(slide9.slide_id, left=0.25, top=1, width=9.5, height=6, word_wrap=True)
 
@@ -250,7 +333,7 @@ class IncidentReportPresentation:
 
         title_shape = slide5.shapes.placeholders[0]
 
-        self.__edit_paragraph(title_shape.text_frame.paragraphs[0], text_content=text, color=bright_red)
+        self.__edit_paragraph(title_shape.text_frame.paragraphs[0], text_content=text, color=bright_red, bold=True)
 
 
     def set_end_slide(self, end_title):

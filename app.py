@@ -29,8 +29,6 @@ def create_presentation(filetype):
 
         enterprise_logo = 'Picture3.png'
 
-        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo)
-
         incident_site = 'SOCAVER'
         incident_report_edition_date = '01/06/2022'
         incident_title = 'ACCIDENT GRAVE DE CHUTE DE CUBITAINER D’UN CHARIOT SUR M. MABIA DU 30/05/2022'
@@ -43,7 +41,7 @@ def create_presentation(filetype):
             'Les recommandations',
         ]
 
-        slide3_content = "Suite à la mise en service du nouveau réseau d’eau de refroidissement 30°C par le service Maintenance, il y ‘a eu une baisse de niveau d’eau dans la bâche qui a nécessité un appoint d’eau traitée (1000 litres d’eau et 25 litres de NALCO trac 102 ). C’est dans cette optique que deux cubitainers d’eau traitée ont été déposés dans la salle machine à coté de la station des pompes. Un des deux cubitainers a été utilisé samedi et l’autre(qui n’a pas de support en palette bois en dessous) n’a pas été utilisé en attente d’un éventuel appoint. "
+        incident_context = "Suite à la mise en service du nouveau réseau d’eau de refroidissement 30°C par le service Maintenance, il y ‘a eu une baisse de niveau d’eau dans la bâche qui a nécessité un appoint d’eau traitée (1000 litres d’eau et 25 litres de NALCO trac 102 ). C’est dans cette optique que deux cubitainers d’eau traitée ont été déposés dans la salle machine à coté de la station des pompes. Un des deux cubitainers a été utilisé samedi et l’autre(qui n’a pas de support en palette bois en dessous) n’a pas été utilisé en attente d’un éventuel appoint. "
 
         team_members = [
             "KAMENI Vincent: Directeur des ventes",
@@ -65,10 +63,27 @@ def create_presentation(filetype):
         ]
 
         slide6_event_title = 'Heurt et Ecrasement de M. MABIA par un Cubitainer avec une charge d’environ une tonne'
-        slide6_event_table_titles = ["Causes immédiates", "Causes fondamentales", "Actions", "Responsabilités", "Délais"]
+        event_table_headers = ["Causes immédiates", "Causes fondamentales", "Actions", "Responsabilités", "Délais"]
+
 
         # Récupérer les données JSON de la requête
-        data = request.get_json()
+        json_data = request.get_json()
+
+        data = json.loads(json_data)[0]
+        
+        print(data)
+
+        incident_title = data['description']
+        incident_site = data['site']['name']
+        
+        incident_context = data['context']
+
+        now = datetime.now()
+        incident_report_edition_date = now.strftime('%d/%m/%Y')
+
+        events_data = data['events']
+
+        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers)
 
         # Slide 1
         incident_presentation.set_front_page(incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
@@ -77,7 +92,7 @@ def create_presentation(filetype):
         incident_presentation.set_summary_slide('Recherche des causes', summary)
 
         # Slide 3
-        incident_presentation.set_context_slide("Contexte", slide3_content)
+        incident_presentation.set_context_slide("Contexte", incident_context)
 
         # Slide 4
         incident_presentation.set_team_slide("L’équipe", team_members)
@@ -86,7 +101,9 @@ def create_presentation(filetype):
         incident_presentation.set_methodology_illustration("La méthodologie:")
 
         # Slide 6
-        incident_presentation.add_event_slide(slide6_event_title, slide6_event_table_titles)
+        for event_data in events_data:
+            if event_data['directCauses']:
+                incident_presentation.add_event_slide(event_data)
 
         # Slide 7                                                                                                                                                                                                                                                                     
         incident_presentation.set_resume_slide("Les principales recommandations")
