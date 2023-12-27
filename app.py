@@ -9,6 +9,7 @@ from pptx.util import Inches
 from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE
 from flask import Flask, request, send_file
 from flask import render_template, send_from_directory
+from IncidentReportPresentation import IncidentReportPresentation
 import json
 
 
@@ -207,8 +208,6 @@ def add_context_description_slide(prs: Presentation, slide_title, slide_content)
     p.text = slide_content
     p.font.size = Pt(16)
     p.alignment = PP_ALIGN.JUSTIFY
-    txBox.word_wrap = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
-
 
 def add_summary_slide(prs: Presentation, summary_title, parts):
     # prs.slide_layouts[1] => bullet_slide_layout
@@ -260,7 +259,7 @@ def add_summary_slide(prs: Presentation, summary_title, parts):
         paragraph.line_spacing = None
         paragraph.alignment = None
 
-def set_front_cover_presentation(prs: Presentation, incident_site, incident_report_edition_date, incident_title, incident_title_sub_text, image_uri = ''):
+def set_front_page(prs: Presentation, incident_site, incident_report_edition_date, incident_title, incident_title_sub_text, image_uri = ''):
     # prs.slide_layouts[8] => picture_with_caption_layout
 
     placeholder_id = 2
@@ -318,7 +317,7 @@ def set_front_cover_presentation(prs: Presentation, incident_site, incident_repo
     # txBox2 = slide1.shapes.add_textbox(Inches(0.3), Inches(0), Inches(4), Inches(0.4))
 
 
-def convert_pptx_to_pdf(file_name):
+def convert_file_to_pdf(file_name):
     try:
         subprocess.run(['libreoffice', '--headless', '--convert-to', 'pdf', file_name, '--outdir', app.root_path + '/files/pdf'], check=True)
         # print(f"Le fichier {file_name} a été converti avec succès en PDF.")
@@ -334,14 +333,19 @@ def create_presentation(filetype):
     if filetype == 'pptx' or filetype == 'pdf':
 
         prs = Presentation()
-            
+
+        prs1 = Presentation()
+
+        incident_presentation = IncidentReportPresentation(prs1, 'Picture3.png')
+
+
         enterprise_logo = 'Picture3.png'
 
         incident_site = 'SOCAVER'
         incident_report_edition_date = '01/06/2022'
         incident_title = 'ACCIDENT GRAVE DE CHUTE DE CUBITAINER D’UN CHARIOT SUR M. MABIA DU 30/05/2022'
 
-        slide2_parts = [
+        summary = [
             'Le contexte',
             'L’équipe',
             'La méthodologie',
@@ -351,7 +355,7 @@ def create_presentation(filetype):
 
         slide3_content = "Suite à la mise en service du nouveau réseau d’eau de refroidissement 30°C par le service Maintenance, il y ‘a eu une baisse de niveau d’eau dans la bâche qui a nécessité un appoint d’eau traitée (1000 litres d’eau et 25 litres de NALCO trac 102 ). C’est dans cette optique que deux cubitainers d’eau traitée ont été déposés dans la salle machine à coté de la station des pompes. Un des deux cubitainers a été utilisé samedi et l’autre(qui n’a pas de support en palette bois en dessous) n’a pas été utilisé en attente d’un éventuel appoint. "
 
-        slide4_team_members = [
+        team_members = [
             "KAMENI Vincent: Directeur des ventes",
             "MPONDO MBOKA Régis: Directeur QHSE",
             "KAPING Stephan: Chef Division Production",
@@ -377,48 +381,67 @@ def create_presentation(filetype):
         data = request.get_json()
 
         # Slide 1
-        set_front_cover_presentation(prs, incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
+        set_front_page(prs, incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
+        incident_presentation.set_front_page(incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
 
         # Slide 2
-        add_summary_slide(prs, 'Recherche des causes', slide2_parts)
+        add_summary_slide(prs, 'Recherche des causes', summary)
+        incident_presentation.set_summary_slide('Recherche des causes', summary)
 
         # Slide 3
         add_context_description_slide(prs, "Contexte", slide3_content)
+        incident_presentation.set_context_slide("Contexte", slide3_content)
 
         # Slide 4
-        add_team_slide(prs, "L’équipe", slide4_team_members)
+        add_team_slide(prs, "L’équipe", team_members)
+        incident_presentation.set_team_slide("L’équipe", team_members)
 
         # Slide 5
         add_presentation_slide(prs, "La méthodologie:")
+        incident_presentation.set_methodology_illustration("La méthodologie:")
 
         # Slide 6
         add_scat_table_slide(prs, slide6_event_title, slide6_event_table_titles)
+        incident_presentation.add_event_slide(slide6_event_title, slide6_event_table_titles)
 
         # Slide 7                                                                                                                                                                                                                                                                     
         add_resume_slide(prs, "Les principales recommandations")
+        incident_presentation.set_resume_slide("Les principales recommandations")
 
         # Slide 8
         add_appendix_slide(prs, "ANNEXES")
+        incident_presentation.set_appendix("ANNEXES")
 
         # Slide 9
         add_end_slide(prs, "MERCI")
+        incident_presentation.set_end_slide("MERCI")
 
         # Footer
         paginate_presentation(prs)
-        set_footer_logo_slides(prs, enterprise_logo)
+        incident_presentation.paginate_presentation()
 
-        output_filename = incident_title.replace(' ', '-').replace('/', '-') + '-' + datetime.now().strftime('%H-%M-%S')
+        set_footer_logo_slides(prs, enterprise_logo)
+        incident_presentation.set_footer_logo_to_slides()
+
+        output_filename = incident_title.replace(' ', '-').replace('/', '-').replace('.', '-') + '-' + datetime.now().strftime('%H-%M-%S')
 
         # print(app.static_folder + '/' + output_filename + '.pptx')
         file_out = app.root_path + '/files/pptx/' + output_filename + '.pptx'
+        file_path = app.root_path + '/files/pptx/'+ 'NEW-' + output_filename + '.pptx'
 
         if filetype == 'pdf':
             prs.save(file_out)
-            convert_pptx_to_pdf(file_out)
+
+            incident_presentation.save(file_path)
+            
+            convert_file_to_pdf(file_out)
             # Instancier un objet Presentation qui représente un fichier PPTX
             return send_file(app.root_path + '/files/pdf' + '/' + output_filename + ".pdf", as_attachment=True)
         elif filetype == 'pptx':
             prs.save(file_out)
+
+            incident_presentation.save(file_path)
+
             return send_file(file_out, as_attachment=True)
     else:
         return "Type de fichier non pris en charge", 400
