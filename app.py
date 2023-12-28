@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 import subprocess
 from pptx import Presentation
 from pptx.dml.color import RGBColor
@@ -8,7 +9,7 @@ from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches
 from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE
 from flask import Flask, request, send_file
-from flask import render_template, send_from_directory
+from flask import after_this_request
 from IncidentReportPresentation import IncidentReportPresentation
 import json
 
@@ -39,6 +40,17 @@ def check_if_colorable(events_data, direct_causes_security_limit = 35):
 app = Flask(__name__)
 @app.route('/api/<string:filetype>', methods=['POST'])
 def create_presentation(filetype):
+                
+    @after_this_request
+    def delete_file(response):
+        try:
+            # print(file_path)
+            os.remove(file_path)
+        except Exception as error:
+            app.logger.error("Erreur lors de la suppression du fichier : %s", error)
+        return response
+
+
     if filetype == 'pptx' or filetype == 'pdf':
 
         enterprise_logo = 'Picture3.png'
@@ -130,15 +142,17 @@ def create_presentation(filetype):
         incident_presentation.paginate_presentation()
         incident_presentation.set_footer_logo_to_slides()
 
-        output_filename = incident_title.replace(' ', '-').replace('/', '-').replace('.', '-') + '-' + datetime.now().strftime('%H-%M-%S')
+        output_filename = incident_title.replace(' ', '-').replace('/', '-').replace('.', '-').upper() + '-' + datetime.now().strftime('%H-%M-%S')
 
         file_path = app.root_path + '/files/pptx/' + output_filename + '.pptx'
 
         if filetype == 'pdf':
             incident_presentation.save(file_path)            
             convert_file_to_pdf(file_path)
-
-            return send_file(app.root_path + '/files/pdf' + '/' + output_filename + ".pdf", as_attachment=True)
+            
+            os.remove(file_path)
+            file_path = app.root_path + '/files/pdf' + '/' + output_filename + ".pdf"
+            return send_file(file_path, as_attachment=True)
         elif filetype == 'pptx':
             incident_presentation.save(file_path)
 
