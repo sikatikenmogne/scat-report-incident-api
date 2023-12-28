@@ -3,11 +3,6 @@ import os
 import subprocess
 from pptx import Presentation
 from pptx.dml.color import RGBColor
-from pptx.enum.dml import MSO_THEME_COLOR
-from pptx.util import Pt
-from pptx.enum.text import PP_ALIGN
-from pptx.util import Inches
-from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE
 from flask import Flask, request, send_file
 from flask import after_this_request
 from IncidentReportPresentation import IncidentReportPresentation
@@ -107,7 +102,7 @@ def create_presentation(filetype):
 
         events_data = data['events']
 
-        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers, check_if_colorable(events_data))
+        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers, check_if_colorable(events_data, 25))
 
         # Slide 1
         incident_presentation.set_front_page(incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
