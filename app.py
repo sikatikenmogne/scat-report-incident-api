@@ -11,14 +11,14 @@ import json
 
 def convert_file_to_pdf(file_name):
     try:
-        subprocess.run(['libreoffice', '--headless', '--convert-to', 'pdf', file_name, '--outdir', app.root_path + '/files/pdf'], check=True)
+        subprocess.run(['libreoffice', '--headless', '--convert-to', 'pdf:writer_pdf_Export', file_name, '--outdir', app.root_path + '/files/pdf'], check=True)
         # print(f"Le fichier {file_name} a été converti avec succès en PDF.")
     except subprocess.CalledProcessError as e:
         print(f"Une erreur s'est produite lors de la conversion du fichier {file_name} : {e}")
 
     # return '/files/pdf/' + file_name
 
-def check_if_colorable(events_data, direct_causes_security_limit = 35):
+def check_if_colorable(events_data, direct_causes_security_limit = 14):
     count = 0
     for event_data in events_data:
         if event_data['directCauses']:
@@ -62,8 +62,7 @@ def create_presentation(filetype):
             'Les recommandations',
         ]
 
-        incident_context = "Suite à la mise en service du nouveau réseau d’eau de refroidissement 30°C par le service Maintenance, il y ‘a eu une baisse de niveau d’eau dans la bâche qui a nécessité un appoint d’eau traitée (1000 litres d’eau et 25 litres de NALCO trac 102 ). C’est dans cette optique que deux cubitainers d’eau traitée ont été déposés dans la salle machine à coté de la station des pompes. Un des deux cubitainers a été utilisé samedi et l’autre(qui n’a pas de support en palette bois en dessous) n’a pas été utilisé en attente d’un éventuel appoint. "
-
+        incident_context = " "
         team_members = [
             "KAMENI Vincent: Directeur des ventes",
             "MPONDO MBOKA Régis: Directeur QHSE",
@@ -95,14 +94,15 @@ def create_presentation(filetype):
         incident_title = data['description']
         incident_site = data['site']['name']
         
-        incident_context = data['context']
+        if type(data['context']) == str:
+            incident_context = data['context']
 
         now = datetime.now()
         incident_report_edition_date = now.strftime('%d/%m/%Y')
 
         events_data = data['events']
 
-        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers, check_if_colorable(events_data, 25))
+        incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers)
 
         # Slide 1
         incident_presentation.set_front_page(incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
@@ -119,10 +119,12 @@ def create_presentation(filetype):
         # Slide 5
         incident_presentation.set_methodology_illustration("La méthodologie:")
 
-        # Slide 6
         for event_data in events_data:
             if event_data['directCauses']:
-                incident_presentation.add_event_slide(event_data)
+                for direct_cause in event_data['directCauses']:
+                    if direct_cause['fundamentalCauses']:
+                        incident_presentation.add_one_direct_cause_event_slide(direct_cause, event_data)
+
 
         # Slide 7                                                                                                                                                                                                                                                                     
         incident_presentation.set_resume_slide("Les principales recommandations")
