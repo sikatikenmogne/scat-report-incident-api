@@ -7,18 +7,19 @@ def distance(color1, color2):
     return ((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2) ** 0.5
 
 def generate_random_color():
-    # Generate a random hue
-    h = random.random()
-    # Generate a random saturation within the recommended range
-    s = random.uniform(0.6, 1.0)
-    # Generate a random brightness within the recommended range
-    v = random.uniform(0.6, 1.0)
-    # Convert the HSV color to RGB
-    r, g, b = colorsys.hsv_to_rgb(h, s, v)
-    # Ensure the color has enough contrast with white
-    while (r * 0.299 + g * 0.587 + b * 0.114) > 0.5:
+    while True:
+        # Generate a random hue
+        h = random.random()
+        # Generate a random saturation within the recommended range
+        s = random.uniform(0.6, 1.0)
+        # Generate a random brightness within the recommended range
         v = random.uniform(0.3, 0.6)
+        # Convert the HSV color to RGB
         r, g, b = colorsys.hsv_to_rgb(h, s, v)
+
+        if not ((0.1 < h < 0.3) and (s > 0.2) and (v > 0.6)):
+            break
+
     return (int(r * 255), int(g * 255), int(b * 255))
 
 class UniqueColorGenerator:
