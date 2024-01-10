@@ -90,13 +90,9 @@ def create_presentation(filetype):
         json_data = request.get_json()
 
         data = json.loads(json_data)[0]
-        
-        incident_title = data['description']
+
         incident_site = data['site']['name']
         
-        if type(data['context']) == str:
-            incident_context = data['context']
-
         now = datetime.now()
         incident_report_edition_date = now.strftime('%d/%m/%Y')
 
@@ -104,12 +100,17 @@ def create_presentation(filetype):
 
         incident_presentation = IncidentReportPresentation(Presentation(), enterprise_logo, event_table_headers)
 
+
+        if type(data['description']) == str:
+            incident_title = data['description']
         # Slide 1
         incident_presentation.set_front_page(incident_site, incident_report_edition_date, incident_title, 'SYNTHESE DE LA RECHERCHE DES CAUSES')
 
         # Slide 2
         incident_presentation.set_summary_slide('Recherche des causes', summary)
-
+        
+        if type(data['context']) == str:
+            incident_context = data['context']
         # Slide 3
         incident_presentation.set_context_slide("Contexte", incident_context)
 
