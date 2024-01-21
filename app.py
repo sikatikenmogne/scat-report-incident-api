@@ -48,7 +48,7 @@ def create_presentation(filetype):
 
     if filetype == 'pptx' or filetype == 'pdf':
 
-        enterprise_logo = 'Picture3.png'
+        enterprise_logo = 'logo-boissons-du-cameroun.png'
 
         incident_site = 'SOCAVER'
         incident_report_edition_date = '01/06/2022'
@@ -92,7 +92,7 @@ def create_presentation(filetype):
         data = json.loads(json_data)[0]
 
         incident_site = data['site']['name']
-        
+
         now = datetime.now()
         incident_report_edition_date = now.strftime('%d/%m/%Y')
 
@@ -111,11 +111,22 @@ def create_presentation(filetype):
         
         if type(data['context']) == str:
             incident_context = data['context']
-        # Slide 3
-        incident_presentation.set_context_slide("Contexte", incident_context)
+
+            line_count = incident_presentation.calculate_line_count(incident_context, 110)
+
+            if(line_count > 27):
+                split_context_values = incident_presentation.split_string(incident_context, 3000) 
+
+                for split_context_value in split_context_values:
+                    incident_presentation.set_context_slide("Contexte", split_context_value)
+            else:       
+                # Slide 3
+                incident_presentation.set_context_slide("Contexte", incident_context)
 
         # Slide 4
-        incident_presentation.set_team_slide("L’équipe", team_members)
+        if(data['team'] != None and data['team'] != [] ):
+            team = list(data['team'].values())
+            incident_presentation.set_team_slide("L’équipe", team)
 
         # Slide 5
         incident_presentation.set_methodology_illustration("La méthodologie:")
@@ -123,12 +134,11 @@ def create_presentation(filetype):
         for event_data in events_data:
             if event_data['directCauses']:
                 for direct_cause in event_data['directCauses']:
-                    if direct_cause['fundamentalCauses']:
                         incident_presentation.add_one_direct_cause_event_slide(direct_cause, event_data)
 
 
         # Slide 7                                                                                                                                                                                                                                                                     
-        incident_presentation.set_resume_slide("Les principales recommandations")
+        # incident_presentation.set_resume_slide("Les principales recommandations")
 
         # Slide 8
         incident_presentation.set_appendix("ANNEXES")

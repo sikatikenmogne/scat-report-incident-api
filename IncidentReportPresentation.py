@@ -43,7 +43,7 @@ class IncidentReportPresentation:
         # set footer logo to slides
     def set_footer_logo_to_slides(self):
         for i, slide in enumerate(self.prs.slides, start=1):
-            slide.shapes.add_picture(self.enterprise_logo, Inches(9.32), Inches(6.60), Inches(0.60), Inches(0.60))
+            slide.shapes.add_picture(self.enterprise_logo, Inches(8.50), Inches(6.60), Inches(1.60), Inches(1))
 
     def add_textbox_to_slide(self, slide_id: int, left: float, top: float, width: float, height: float, word_wrap = True):
         slide = self.prs.slides.get(slide_id)
@@ -140,6 +140,75 @@ class IncidentReportPresentation:
             # p2.text = member
             # p2.font.color.rgb = RGBColor(0xB2, 0x22, 0x22)
 
+    def calculate_line_count(self, text, width):
+        """
+        Calculate the number of lines a string of text will take when displayed in a text box.
+
+        This function takes into account voluntary line breaks ('\n') and a fixed width for the text box.
+        It assumes that no word is longer than the specified width.
+
+        Parameters:
+        text (str): The text to be displayed in the text box.
+        width (int): The fixed width of the text box.
+
+        Returns:
+        lines (int): The number of lines the text will take when displayed in the text box.
+        """
+        paragraphs = text.split('\n')
+        lines = 0
+
+        for paragraph in paragraphs:
+            words = paragraph.split(' ')
+            current_line_length = 0
+
+            for word in words:
+                word_length = len(word)
+                if current_line_length + word_length <= width:
+                    current_line_length += word_length + 1  # +1 for the space
+                else:
+                    lines += 1
+                    current_line_length = word_length + 1  # +1 for the space
+
+            lines += 1  # for the last line of the paragraph
+
+        return lines
+
+
+    def split_string(self, text, limit):
+        """
+        Split a string into substrings of a given length.
+
+        This function takes a string and a length limit, and returns a list of substrings.
+        Each substring is as long as possible without exceeding the length limit and without splitting words.
+        Words longer than the length limit are split.
+
+        Parameters:
+        text (str): The string to be split.
+        limit (int): The maximum length of each substring.
+
+        Returns:
+        substrings (list of str): The list of substrings.
+        """
+        words = text.split(' ')
+        substrings = []
+        current_substring = ''
+
+        for word in words:
+            # If adding the next word to the current substring would exceed the limit,
+            # add the current substring to the list and start a new one
+            if len(current_substring) + len(word) > limit:
+                substrings.append(current_substring.strip())
+                current_substring = ''
+
+            # Add the next word to the current substring (with a space)
+            current_substring += word + ' '
+
+        # Add the last substring to the list (if it's not empty)
+        if current_substring:
+            substrings.append(current_substring.strip())
+
+        return substrings
+
 
 
     def set_context_slide(self, slide_title, context:string):
@@ -156,9 +225,9 @@ class IncidentReportPresentation:
         
         context = context.replace("\r", "")
         
-        txBox = self.add_textbox_to_slide(slide.slide_id, 0.25, 0.5, 9.5, 6.4)
+        txBox = self.add_textbox_to_slide(slide.slide_id, 0.25, 0.5, 10, 6.4)
         p = txBox.text_frame.add_paragraph()
-        self.__edit_paragraph(paragraph=p, text_content=context, font_size=13, font_name='Calibri', alignment=PP_ALIGN.LEFT)
+        self.__edit_paragraph(paragraph=p, text_content=context, font_size=12, font_name='Calibri', alignment=PP_ALIGN.LEFT)
 
 
 
@@ -228,7 +297,7 @@ class IncidentReportPresentation:
 
         # Ajouter un titre à la diapositive
         title_box = self.add_textbox_to_slide(slide8.slide_id, left=0, top=0, width=10, height=1, word_wrap=True)
-        title_box_content = "Evènement : " + event_data['title'].replace("\r","").replace("\n","") + " (" + event_data['EventType']['code'] + ")"
+        title_box_content = "Evènement : " + event_data['title'].replace("\r","").replace("\n","") + ", (" + event_data['EventType']['code'] + ")"
         self.edit_textbox(title_box, text=title_box_content, font_size=24, font_name='Calibri', color=bright_red, alignment=PP_ALIGN.CENTER, bold=True)
 
         # Ajouter un tableau en bas de la diapositive
@@ -359,7 +428,8 @@ class IncidentReportPresentation:
 
         if (event_title_data != None and event_title_data != ""):
             event_header = event_data['EventType']['name'][:57] + "..." if len(event_data['EventType']['name']) > 57 else event_data['EventType']['name']
-            event_header += "   (" + event_title_data + ")" 
+            if(event_title_data != '[Aucune précision fourni]'):
+                event_header += "   (" + event_title_data + ")" 
         else:
             event_header = event_data['EventType']['name']
 
