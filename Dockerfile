@@ -13,6 +13,9 @@ COPY requirements.txt .
 # Installez les dépendances
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+# Assurez-vous que Gunicorn est installé
+RUN pip3 install gunicorn
+
 # Créez les dossiers nécessaires pour les fichiers pptx et pdf
 RUN mkdir -p files/pptx files/pdf
 
@@ -23,4 +26,4 @@ COPY . .
 EXPOSE 9000
 
 # Définissez la commande pour exécuter votre application
-CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["gunicorn", "-w", "4", "app:app", "--bind", "0.0.0.0:9000"]
