@@ -23,7 +23,7 @@ RUN mkdir -p files/pptx files/pdf
 COPY . .
 
 # Exposez le port sur lequel votre application s'exécute (par exemple, 9000 pour votre application)
-EXPOSE 9000
+EXPOSE $PORT
 
 # Définissez la commande pour exécuter votre application
-CMD ["gunicorn", "-w", "4", "app:app", "--bind", "0.0.0.0:9000"]
+CMD ["gunicorn", "-w", "4", "app:app", "--bind", "0.0.0.0:$PORT"]
