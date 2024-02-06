@@ -22,6 +22,9 @@ RUN mkdir -p files/pptx files/pdf
 # Copiez le code source dans le conteneur
 COPY . .
 
+# Définissez une variable d'environnement pour votre port
+ENV PORT=9000
+
 # Exposez le port sur lequel votre application s'exécute (par exemple, 9000 pour votre application)
 EXPOSE $PORT
 
