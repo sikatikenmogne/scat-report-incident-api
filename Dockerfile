@@ -22,11 +22,11 @@ RUN mkdir -p files/pptx files/pdf
 # Copiez le code source dans le conteneur
 COPY . .
 
-# Définissez une variable d'environnement pour votre port
-ENV PORT=9000
+# # Définissez une variable d'environnement pour votre port
+# ENV PORT=9000
 
-# Exposez le port sur lequel votre application s'exécute (par exemple, 9000 pour votre application)
-EXPOSE $PORT
+# # Exposez le port sur lequel votre application s'exécute (par exemple, 9000 pour votre application)
+# EXPOSE $PORT
 
 # Définissez la commande pour exécuter votre application
-CMD ["gunicorn", "-w", "4", "app:app", "--bind", "0.0.0.0:$PORT"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0", "app:app"]
