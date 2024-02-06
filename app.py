@@ -63,26 +63,7 @@ def create_presentation(filetype):
         ]
 
         incident_context = " "
-        team_members = [
-            "KAMENI Vincent: Directeur des ventes",
-            "MPONDO MBOKA Régis: Directeur QHSE",
-            "KAPING Stephan: Chef Division Production",
-            "NGUIMKENG Arnold: Chef de Division RH",
-            "POUTCHEU Emmanuel: Chef d’atelier Préforme et Casier",
-            "WANDJI Valery: Responsable HSSE",
-            "KOSSI David: Chef de groupe presse",
-            "MANI Joseph: Cariste",
-            "TAMO Florence: Infirmière Chef",
-            "TAMEFO Gabriel: Chef de Groupe laboratoire préforme",
-            "NDJELLE Lavie: Chef de Groupe presse",
-            "KOUATCHO: Laborantin",
-            "GUIDIONGUENA Albert: Cariste",
-            "WAFO Freddy: Chef de service Senior Maintenance",
-            "TEMFACK Rodrigue: Chef de service Pyrométrie et maintenance des presses",
-            "Dr TCHIMOU: Médecin référent"
-        ]
 
-        slide6_event_title = 'Heurt et Ecrasement de M. MABIA par un Cubitainer avec une charge d’environ une tonne'
         event_table_headers = ["Causes immédiates", "Causes fondamentales", "Actions", "Responsabilités", "Délais"]
 
 
