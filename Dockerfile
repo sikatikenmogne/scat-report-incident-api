@@ -26,4 +26,4 @@ COPY . .
 EXPOSE 9000
 
 # Définissez la commande pour exécuter votre application
-CMD ["gunicorn", "-w", "4", "app:app", "--bind", "0.0.0.0:9000"]
+CMD ["gunicorn", "-w", "4", "app:app", "--bind", "0.0.0.0:$PORT"]
