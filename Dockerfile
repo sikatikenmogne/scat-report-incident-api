@@ -1,5 +1,6 @@
 # Utilisez l'image de base Python spécifiée dans votre fichier DevContainer.json
 FROM mcr.microsoft.com/devcontainers/python:0-3.11
+ARG port
 
 # Mettez à jour les paquets et installez LibreOffice
 RUN apt-get update && apt-get install -y libreoffice
@@ -9,6 +10,9 @@ WORKDIR /app
 
 # Copiez les fichiers de dépendance dans le conteneur
 COPY requirements.txt .
+
+# Définissez une variable d'environnement pour votre port
+ENV PORT=$port
 
 # Installez les dépendances
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -22,11 +26,8 @@ RUN mkdir -p files/pptx files/pdf
 # Copiez le code source dans le conteneur
 COPY . .
 
-# # Définissez une variable d'environnement pour votre port
-# ENV PORT=9000
-
-# # Exposez le port sur lequel votre application s'exécute (par exemple, 9000 pour votre application)
-# EXPOSE $PORT
+# Exposez le port sur lequel votre application s'exécute (par exemple, 9000 pour votre application)
+EXPOSE $PORT
 
 # Définissez la commande pour exécuter votre application
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0", "app:app"]
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:$PORT", "--preload"]
