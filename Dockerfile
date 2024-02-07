@@ -30,4 +30,4 @@ COPY . .
 EXPOSE $PORT
 
 # Définissez la commande pour exécuter votre application
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:$PORT", "--preload"]
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "wsgi:app"]
